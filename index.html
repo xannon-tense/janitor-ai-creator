@@ -215,8 +215,8 @@ textarea{min-height:70px}
     <h2>Character Template</h2>
 
     <div class="form">
-      <!-- Insert all your sections & inputs exactly like your previous full template -->
-      <!-- Example: -->
+      <!-- All sections like identity, backstory, personality, etc. -->
+      <!-- Example for IDENTITY section -->
       <div class="section">
         <h3>IDENTITY</h3>
         <label>Full Name</label><input id="name">
@@ -291,10 +291,10 @@ textarea{min-height:70px}
   </div>
 </div>
 
-<!-- Loading / Spinner -->
+<!-- Spinner / Countdown -->
 <div id="loadingWrap" class="hidden">
   <div class="spinner"></div>
-  <div id="countdown">5</div>
+  <div id="countdown">0</div>
 </div>
 
 <script>
@@ -308,7 +308,7 @@ function openCreator(){
 }
 
 /* GENERATE WITH SPINNER + COUNTDOWN */
-function generate() {
+async function generate() {
   const loadingWrap = document.getElementById("loadingWrap");
   const countdownEl = document.getElementById("countdown");
   const out = document.getElementById("templateOutput");
@@ -316,73 +316,54 @@ function generate() {
   out.classList.add("hidden");
   loadingWrap.classList.remove("hidden");
 
-  // set estimated countdown (AI generation ~5 seconds)
-  let seconds = 5;
+  let seconds = 15;
   countdownEl.textContent = seconds;
 
-  const interval = setInterval(() => {
+  // countdown timer
+  const interval = setInterval(()=>{
     seconds--;
     countdownEl.textContent = seconds;
-    if (seconds <= 0) clearInterval(interval);
-  }, 1000);
+    if(seconds <= 0) clearInterval(interval);
+  },1000);
 
   const payload = {
-    name: name.value,
-    aliases: aliases.value,
-    species: species.value,
-    race: race.value,
-    age: age.value,
-    height: height.value,
-    sexuality: sexuality.value,
-    role: role.value,
-    appearance: appearance.value,
-    scent: scent.value,
-    clothing: clothing.value,
-    backstory: backstory.value,
-    residence: residence.value,
-    relationships: relationships.value,
-    traits: traits.value,
-    likes: likes.value,
-    dislikes: dislikes.value,
-    insecurities: insecurities.value,
-    behavior: behavior.value,
-    turnons: turnons.value,
-    kinks: kinks.value,
-    during: during.value,
-    commanding: commanding.value,
-    annoyed: annoyed.value,
-    possessive: possessive.value,
-    teasing: teasing.value,
-    soft: soft.value,
-    sidechars: sidechars.value,
-    setting: setting?.value || ""
+    name: name.value, aliases: aliases.value, species: species.value, race: race.value,
+    age: age.value, height: height.value, sexuality: sexuality.value, role: role.value,
+    appearance: appearance.value, scent: scent.value, clothing: clothing.value,
+    backstory: backstory.value, residence: residence.value, relationships: relationships.value,
+    traits: traits.value, likes: likes.value, dislikes: dislikes.value, insecurities: insecurities.value,
+    behavior: behavior.value, turnons: turnons.value, kinks: kinks.value, during: during.value,
+    commanding: commanding.value, annoyed: annoyed.value, possessive: possessive.value,
+    teasing: teasing.value, soft: soft.value, sidechars: sidechars.value,
+    setting: ""
   };
 
-  fetch("/api/generate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  })
-    .then(res => res.json())
-    .then(data => {
-      loadingWrap.classList.add("hidden");
-      out.classList.remove("hidden");
-      out.textContent = data.text;
-      document.getElementById("firstMessage").classList.remove("hidden");
-    })
-    .catch(err => {
-      loadingWrap.classList.add("hidden");
-      out.classList.remove("hidden");
-      out.textContent = "Error generating template.";
-      console.error(err);
+  try {
+    const res = await fetch("/api/generate", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(payload)
     });
+    const data = await res.json();
+
+    clearInterval(interval);
+    loadingWrap.classList.add("hidden");
+    out.classList.remove("hidden");
+    out.textContent = data.text;
+    document.getElementById("firstMessage").classList.remove("hidden");
+  } catch(err){
+    clearInterval(interval);
+    loadingWrap.classList.add("hidden");
+    out.classList.remove("hidden");
+    out.textContent = "Error generating template.";
+    console.error(err);
+  }
 }
 
 /* FIRST MESSAGE */
 function generateFirst(){
   const tone = document.getElementById("tone").value;
   const out = document.getElementById("firstOut");
-
   out.textContent = `*(${tone})*\n\n*The scene opens slowly, the atmosphere heavy with intent and presence…*\n\n**${name.value || "{{char}}"}:** "Looks like we finally meet."`;
 }
 
