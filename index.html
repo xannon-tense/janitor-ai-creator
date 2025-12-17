@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Janitor AI Character Creator</title>
+
+<style>
+:root{
+  --bg:#000;
+  --panel:#0c0c12;
+  --text:#eaeaf0;
+  --accent:#a855f7;
+  --accent-soft:rgba(168,85,247,.25);
+}
+
+body.light{
+  --bg:#f5f5fa;
+  --panel:#ffffff;
+  --text:#111;
+}
+
+*{box-sizing:border-box;font-family:Inter,system-ui,Segoe UI,Arial}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  overflow-x:hidden;
+}
+
+canvas{
+  position:fixed;
+  inset:0;
+  z-index:-1;
+}
+
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:18px 24px;
+}
+
+header h1{
+  font-size:20px;
+  letter-spacing:.6px;
+}
+
+.toggle{
+  cursor:pointer;
+  border:1px solid var(--accent);
+  padding:6px 12px;
+  border-radius:8px;
+  color:var(--accent);
+}
+
+.center{
+  display:flex;
+  justify-content:center;
+  margin-top:8vh;
+}
+
+.panel{
+  width:90%;
+  max-width:900px;
+  background:var(--panel);
+  border:1px solid var(--accent-soft);
+  border-radius:16px;
+  padding:32px;
+  animation:fadeUp .8s ease forwards;
+}
+
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(30px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+.panel h2{
+  color:var(--accent);
+  margin-top:0;
+}
+
+.panel p{
+  opacity:.85;
+  line-height:1.5;
+}
+
+button{
+  background:var(--accent);
+  color:white;
+  border:none;
+  padding:12px 20px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:600;
+}
+
+.hidden{display:none}
+
+.form{
+  margin-top:30px;
+  max-height:60vh;
+  overflow-y:auto;
+  padding-right:10px;
+}
+
+.section{
+  margin-bottom:26px;
+}
+
+.section h3{
+  margin-bottom:10px;
+  color:var(--accent);
+}
+
+label{
+  display:block;
+  font-size:13px;
+  opacity:.8;
+  margin-top:10px;
+}
+
+input, textarea, select{
+  width:100%;
+  background:#00000030;
+  border:1px solid var(--accent-soft);
+  color:var(--text);
+  padding:10px;
+  border-radius:8px;
+  margin-top:4px;
+}
+
+textarea{min-height:70px}
+
+.progress-wrap{
+  margin-top:30px;
+}
+
+.progress{
+  width:100%;
+  height:16px;
+  background:#00000040;
+  border-radius:999px;
+  overflow:hidden;
+  border:1px solid var(--accent-soft);
+}
+
+.bar{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#22c55e,#4ade80);
+  transition:width .3s;
+}
+
+.done{
+  text-align:center;
+  color:#4ade80;
+  font-weight:700;
+  margin-top:6px;
+  text-shadow:0 0 8px #4ade80;
+}
+
+.first-message{
+  margin-top:40px;
+}
+
+.output{
+  white-space:pre-wrap;
+  background:#00000040;
+  border:1px solid var(--accent-soft);
+  padding:16px;
+  border-radius:12px;
+  margin-top:20px;
+  font-size:14px;
+  line-height:1.5;
+}
+</style>
+</head>
+
+<body>
+<canvas id="bg"></canvas>
+
+<header>
+  <h1>Janitor AI Character Creator</h1>
+  <div class="toggle" onclick="toggleMode()">Light / Dark</div>
+</header>
+
+<div class="center">
+  <div class="panel" id="intro">
+    <h2>ADVANCED Template</h2>
+    <p>
+      The Advanced template is designed for Janitor AI characters that require
+      detailed personality structuring, rich backstory, expressive behavior,
+      and properly formatted first-message dialogue.
+    </p>
+    <button onclick="openCreator()">Select Advanced</button>
+  </div>
+</div>
+
+<div class="center hidden" id="creator">
+  <div class="panel">
+    <h2>Character Template</h2>
+
+    <div class="form">
+      <div class="section">
+        <h3>SETTING</h3>
+        <textarea id="setting" placeholder="Modern era in..."></textarea>
+      </div>
+
+      <div class="section">
+        <h3>IDENTITY</h3>
+        <label>Full Name</label><input id="name">
+        <label>Aliases</label><input id="aliases">
+        <label>Species</label><input id="species">
+        <label>Race</label><input id="race">
+        <label>Age</label><input id="age">
+        <label>Height</label><input id="height">
+        <label>Sexuality</label><input id="sexuality">
+        <label>Occupation / Role</label><input id="role">
+        <label>Appearance</label><textarea id="appearance"></textarea>
+        <label>Scent</label><input id="scent">
+        <label>Clothing</label><textarea id="clothing"></textarea>
+      </div>
+
+      <div class="section">
+        <h3>BACKSTORY</h3>
+        <textarea id="backstory"></textarea>
+      </div>
+
+      <div class="section">
+        <h3>RESIDENCE</h3>
+        <textarea id="residence"></textarea>
+      </div>
+
+      <div class="section">
+        <h3>RELATIONSHIPS</h3>
+        <textarea id="relationships"></textarea>
+      </div>
+
+      <div class="section">
+        <h3>PERSONALITY</h3>
+        <label>Traits</label><textarea id="traits"></textarea>
+        <label>Likes</label><textarea id="likes"></textarea>
+        <label>Dislikes</label><textarea id="dislikes"></textarea>
+        <label>Insecurities</label><textarea id="insecurities"></textarea>
+        <label>Physical Behavior</label><textarea id="behavior"></textarea>
+      </div>
+
+      <div class="section">
+        <h3>INTIMACY</h3>
+        <label>Turn-ons</label><textarea id="turnons"></textarea>
+        <label>Kinks</label><textarea id="kinks"></textarea>
+        <label>During Sex</label><textarea id="during"></textarea>
+      </div>
+
+      <div class="section">
+        <h3>SPEECH</h3>
+        <label>Commanding</label><textarea id="commanding"></textarea>
+        <label>Annoyed</label><textarea id="annoyed"></textarea>
+        <label>Possessive</label><textarea id="possessive"></textarea>
+        <label>Teasing</label><textarea id="teasing"></textarea>
+        <label>Soft (rare)</label><textarea id="soft"></textarea>
+      </div>
+
+      <div class="section">
+        <h3>SIDE CHARACTERS</h3>
+        <textarea id="sidechars"></textarea>
+      </div>
+    </div>
+
+    <button onclick="generate()">Generate</button>
+
+    <div class="progress-wrap hidden" id="progressWrap">
+      <div class="progress">
+        <div class="bar" id="bar"></div>
+      </div>
+      <div class="done hidden" id="done">DONE</div>
+    </div>
+
+    <div class="output hidden" id="templateOutput"></div>
+
+    <div class="first-message hidden" id="firstMessage">
+      <h2>First Message Creator</h2>
+      <select id="tone">
+        <option>Regular intro</option>
+        <option>Spicy intro</option>
+        <option>Sad intro</option>
+        <option>Calm intro</option>
+        <option>Chaos-filled intro</option>
+      </select>
+      <textarea id="prompt" placeholder="Optional prompt..."></textarea>
+      <button onclick="generateFirst()">Generate First Message</button>
+      <div class="output" id="firstOut"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleMode(){ document.body.classList.toggle("light"); }
+function openCreator(){
+  document.getElementById("intro").classList.add("hidden");
+  document.getElementById("creator").classList.remove("hidden");
+}
+
+/* GENERATION WITH AI EXPANSION */
+async function generate(){
+  const wrap = document.getElementById("progressWrap");
+  const bar = document.getElementById("bar");
+  const done = document.getElementById("done");
+  const out = document.getElementById("templateOutput");
+
+  wrap.classList.remove("hidden");
+  done.classList.add("hidden");
+  bar.style.width = "0%";
+
+  let p = 0;
+  const fakeProgress = setInterval(()=>{ p += Math.random()*10; bar.style.width=Math.min(p,90)+"%"; },300);
+
+  const payload = {
+    setting: setting.value,
+    name: name.value,
+    aliases: aliases.value,
+    species: species.value,
+    race: race.value,
+    age: age.value,
+    height: height.value,
+    sexuality: sexuality.value,
+    role: role.value,
+    appearance: appearance.value,
+    scent: scent.value,
+    clothing: clothing.value,
+    backstory: backstory.value,
+    residence: residence.value,
+    relationships: relationships.value,
+    traits: traits.value,
+    likes: likes.value,
+    dislikes: dislikes.value,
+    insecurities: insecurities.value,
+    behavior: behavior.value,
+    turnons: turnons.value,
+    kinks: kinks.value,
+    during: during.value,
+    commanding: commanding.value,
+    annoyed: annoyed.value,
+    possessive: possessive.value,
+    teasing: teasing.value,
+    soft: soft.value,
+    sidechars: sidechars.value
+  };
+
+  const res = await fetch("/api/generate", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(payload)
+  });
+
+  const data = await res.json();
+  clearInterval(fakeProgress);
+  bar.style.width="100%";
+  done.classList.remove("hidden");
+  out.textContent = data.text;  // generated text keeps ">" headings
+  out.classList.remove("hidden");
+  document.getElementById("firstMessage").classList.remove("hidden");
+}
+
+/* FIRST MESSAGE GENERATOR (basic placeholder) */
+function generateFirst(){
+  const tone=document.getElementById("tone").value;
+  const out=document.getElementById("firstOut");
+
+  out.textContent = `*(${tone})*\n\n*The scene opens, tension already hanging in the air…*\n\n**${name.value || "{{char}}"}:** "Looks like we finally meet."`;
+}
+
+/* PARTICLES */
+const c=document.getElementById("bg");
+const ctx=c.getContext("2d");
+let w,h,pts=[];
+function resize(){ w=c.width=innerWidth; h=c.height=innerHeight; pts=[...Array(80)].map(()=>({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3})); }
+window.onresize=resize;
+resize();
+function draw(){
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle="#a855f7";
+  pts.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0||p.x>w)p.vx*=-1;
+    if(p.y<0||p.y>h)p.vy*=-1;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,2,0,7);ctx.fill();
+    pts.forEach(q=>{const d=Math.hypot(p.x-q.x,p.y-q.y);if(d<120){ctx.strokeStyle=`rgba(168,85,247,${1-d/120})`;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();}});
+  });
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>
