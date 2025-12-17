@@ -197,4 +197,219 @@ textarea{min-height:70px}
   <div class="panel" id="intro">
     <h2>ADVANCED Template</h2>
     <p>
-      The Advanced template is designed for Janitor AI characters tha
+      The Advanced template is designed for Janitor AI characters that require
+      detailed personality structuring, rich backstory, expressive behavior,
+      and properly formatted first-message dialogue.
+    </p>
+    <p>
+      This format supports deep roleplay accuracy, complex traits, side
+      characters, and immersive introductions that feel alive rather than
+      robotic.
+    </p>
+    <button onclick="openCreator()">Select Advanced</button>
+  </div>
+</div>
+
+<div class="center hidden" id="creator">
+  <div class="panel">
+    <h2>Character Template</h2>
+
+    <div class="form">
+      <!-- Insert all your sections & inputs exactly like your previous full template -->
+      <!-- Example: -->
+      <div class="section">
+        <h3>IDENTITY</h3>
+        <label>Full Name</label><input id="name">
+        <label>Aliases</label><input id="aliases">
+        <label>Species</label><input id="species">
+        <label>Race</label><input id="race">
+        <label>Age</label><input id="age">
+        <label>Height</label><input id="height">
+        <label>Sexuality</label><input id="sexuality">
+        <label>Occupation / Role</label><input id="role">
+        <label>Appearance</label><textarea id="appearance"></textarea>
+        <label>Scent</label><input id="scent">
+        <label>Clothing</label><textarea id="clothing"></textarea>
+      </div>
+      <div class="section">
+        <h3>BACKSTORY</h3>
+        <textarea id="backstory"></textarea>
+      </div>
+      <div class="section">
+        <h3>RESIDENCE</h3>
+        <textarea id="residence"></textarea>
+      </div>
+      <div class="section">
+        <h3>RELATIONSHIPS</h3>
+        <textarea id="relationships"></textarea>
+      </div>
+      <div class="section">
+        <h3>PERSONALITY</h3>
+        <label>Traits</label><textarea id="traits"></textarea>
+        <label>Likes</label><textarea id="likes"></textarea>
+        <label>Dislikes</label><textarea id="dislikes"></textarea>
+        <label>Insecurities</label><textarea id="insecurities"></textarea>
+        <label>Physical Behavior</label><textarea id="behavior"></textarea>
+      </div>
+      <div class="section">
+        <h3>INTIMACY</h3>
+        <label>Turn-ons</label><textarea id="turnons"></textarea>
+        <label>Kinks</label><textarea id="kinks"></textarea>
+        <label>During Sex</label><textarea id="during"></textarea>
+      </div>
+      <div class="section">
+        <h3>SPEECH</h3>
+        <label>Commanding</label><input id="commanding">
+        <label>Annoyed</label><input id="annoyed">
+        <label>Possessive</label><input id="possessive">
+        <label>Teasing</label><input id="teasing">
+        <label>Soft (rare)</label><input id="soft">
+      </div>
+      <div class="section">
+        <h3>SIDE CHARACTERS</h3>
+        <textarea id="sidechars"></textarea>
+      </div>
+    </div>
+
+    <button onclick="generate()">Generate</button>
+
+    <div class="output hidden" id="templateOutput"></div>
+
+    <div class="first-message hidden" id="firstMessage">
+      <h2>First Message Creator</h2>
+      <select id="tone">
+        <option>Regular intro</option>
+        <option>Spicy intro</option>
+        <option>Sad intro</option>
+        <option>Calm intro</option>
+        <option>Chaos-filled intro</option>
+      </select>
+      <textarea id="prompt" placeholder="Optional prompt..."></textarea>
+      <button onclick="generateFirst()">Generate First Message</button>
+      <div class="output" id="firstOut"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading / Spinner -->
+<div id="loadingWrap" class="hidden">
+  <div class="spinner"></div>
+  <div id="countdown">5</div>
+</div>
+
+<script>
+/* LIGHT / DARK */
+function toggleMode(){ document.body.classList.toggle("light"); }
+
+/* NAV */
+function openCreator(){
+  document.getElementById("intro").classList.add("hidden");
+  document.getElementById("creator").classList.remove("hidden");
+}
+
+/* GENERATE WITH SPINNER + COUNTDOWN */
+function generate() {
+  const loadingWrap = document.getElementById("loadingWrap");
+  const countdownEl = document.getElementById("countdown");
+  const out = document.getElementById("templateOutput");
+
+  out.classList.add("hidden");
+  loadingWrap.classList.remove("hidden");
+
+  // set estimated countdown (AI generation ~5 seconds)
+  let seconds = 5;
+  countdownEl.textContent = seconds;
+
+  const interval = setInterval(() => {
+    seconds--;
+    countdownEl.textContent = seconds;
+    if (seconds <= 0) clearInterval(interval);
+  }, 1000);
+
+  const payload = {
+    name: name.value,
+    aliases: aliases.value,
+    species: species.value,
+    race: race.value,
+    age: age.value,
+    height: height.value,
+    sexuality: sexuality.value,
+    role: role.value,
+    appearance: appearance.value,
+    scent: scent.value,
+    clothing: clothing.value,
+    backstory: backstory.value,
+    residence: residence.value,
+    relationships: relationships.value,
+    traits: traits.value,
+    likes: likes.value,
+    dislikes: dislikes.value,
+    insecurities: insecurities.value,
+    behavior: behavior.value,
+    turnons: turnons.value,
+    kinks: kinks.value,
+    during: during.value,
+    commanding: commanding.value,
+    annoyed: annoyed.value,
+    possessive: possessive.value,
+    teasing: teasing.value,
+    soft: soft.value,
+    sidechars: sidechars.value,
+    setting: setting?.value || ""
+  };
+
+  fetch("/api/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  })
+    .then(res => res.json())
+    .then(data => {
+      loadingWrap.classList.add("hidden");
+      out.classList.remove("hidden");
+      out.textContent = data.text;
+      document.getElementById("firstMessage").classList.remove("hidden");
+    })
+    .catch(err => {
+      loadingWrap.classList.add("hidden");
+      out.classList.remove("hidden");
+      out.textContent = "Error generating template.";
+      console.error(err);
+    });
+}
+
+/* FIRST MESSAGE */
+function generateFirst(){
+  const tone = document.getElementById("tone").value;
+  const out = document.getElementById("firstOut");
+
+  out.textContent = `*(${tone})*\n\n*The scene opens slowly, the atmosphere heavy with intent and presence…*\n\n**${name.value || "{{char}}"}:** "Looks like we finally meet."`;
+}
+
+/* PARTICLES */
+const c=document.getElementById("bg");
+const ctx=c.getContext("2d");
+let w,h,pts=[];
+function resize(){ w=c.width=innerWidth; h=c.height=innerHeight; pts=[...Array(80)].map(()=>({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3})); }
+window.onresize=resize;
+resize();
+function draw(){
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle="#a855f7";
+  pts.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0||p.x>w)p.vx*=-1;
+    if(p.y<0||p.y>h)p.vy*=-1;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,2,0,7); ctx.fill();
+    pts.forEach(q=>{
+      const d=Math.hypot(p.x-q.x,p.y-q.y);
+      if(d<120){ ctx.strokeStyle=`rgba(168,85,247,${1-d/120})`; ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke(); }
+    });
+  });
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>
