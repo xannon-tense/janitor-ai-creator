@@ -137,34 +137,33 @@ input, textarea, select{
 
 textarea{min-height:70px}
 
-/* LOADING / SPINNER */
-#loadingWrap{
-  position:fixed;
-  inset:0;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
-  background:rgba(0,0,0,0.85);
-  z-index:10;
-  color:white;
-  font-weight:bold;
-  font-size:28px;
+/* GENERATION BAR */
+.progress-wrap{
+  margin-top:30px;
 }
 
-.spinner{
-  border:6px solid #00000050;
-  border-top:6px solid var(--accent);
-  border-radius:50%;
-  width:60px;
-  height:60px;
-  animation:spin 1s linear infinite;
-  margin-bottom:20px;
+.progress{
+  width:100%;
+  height:16px;
+  background:#00000040;
+  border-radius:999px;
+  overflow:hidden;
+  border:1px solid var(--accent-soft);
 }
 
-@keyframes spin{
-  0%{transform:rotate(0deg);}
-  100%{transform:rotate(360deg);}
+.bar{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#22c55e,#4ade80);
+  transition:width .2s;
+}
+
+.done{
+  text-align:center;
+  color:#4ade80;
+  font-weight:700;
+  margin-top:6px;
+  text-shadow:0 0 8px #4ade80;
 }
 
 /* FIRST MESSAGE */
@@ -215,8 +214,6 @@ textarea{min-height:70px}
     <h2>Character Template</h2>
 
     <div class="form">
-      <!-- All sections like identity, backstory, personality, etc. -->
-      <!-- Example for IDENTITY section -->
       <div class="section">
         <h3>IDENTITY</h3>
         <label>Full Name</label><input id="name">
@@ -231,18 +228,22 @@ textarea{min-height:70px}
         <label>Scent</label><input id="scent">
         <label>Clothing</label><textarea id="clothing"></textarea>
       </div>
+
       <div class="section">
         <h3>BACKSTORY</h3>
         <textarea id="backstory"></textarea>
       </div>
+
       <div class="section">
         <h3>RESIDENCE</h3>
         <textarea id="residence"></textarea>
       </div>
+
       <div class="section">
         <h3>RELATIONSHIPS</h3>
         <textarea id="relationships"></textarea>
       </div>
+
       <div class="section">
         <h3>PERSONALITY</h3>
         <label>Traits</label><textarea id="traits"></textarea>
@@ -251,12 +252,14 @@ textarea{min-height:70px}
         <label>Insecurities</label><textarea id="insecurities"></textarea>
         <label>Physical Behavior</label><textarea id="behavior"></textarea>
       </div>
+
       <div class="section">
         <h3>INTIMACY</h3>
         <label>Turn-ons</label><textarea id="turnons"></textarea>
         <label>Kinks</label><textarea id="kinks"></textarea>
         <label>During Sex</label><textarea id="during"></textarea>
       </div>
+
       <div class="section">
         <h3>SPEECH</h3>
         <label>Commanding</label><input id="commanding">
@@ -265,6 +268,7 @@ textarea{min-height:70px}
         <label>Teasing</label><input id="teasing">
         <label>Soft (rare)</label><input id="soft">
       </div>
+
       <div class="section">
         <h3>SIDE CHARACTERS</h3>
         <textarea id="sidechars"></textarea>
@@ -272,6 +276,13 @@ textarea{min-height:70px}
     </div>
 
     <button onclick="generate()">Generate</button>
+
+    <div class="progress-wrap hidden" id="progressWrap">
+      <div class="progress">
+        <div class="bar" id="bar"></div>
+      </div>
+      <div class="done hidden" id="done">DONE</div>
+    </div>
 
     <div class="output hidden" id="templateOutput"></div>
 
@@ -291,15 +302,11 @@ textarea{min-height:70px}
   </div>
 </div>
 
-<!-- Spinner / Countdown -->
-<div id="loadingWrap" class="hidden">
-  <div class="spinner"></div>
-  <div id="countdown">0</div>
-</div>
-
 <script>
 /* LIGHT / DARK */
-function toggleMode(){ document.body.classList.toggle("light"); }
+function toggleMode(){
+  document.body.classList.toggle("light");
+}
 
 /* NAV */
 function openCreator(){
@@ -307,73 +314,126 @@ function openCreator(){
   document.getElementById("creator").classList.remove("hidden");
 }
 
-/* GENERATE WITH SPINNER + COUNTDOWN */
-async function generate() {
-  const loadingWrap = document.getElementById("loadingWrap");
-  const countdownEl = document.getElementById("countdown");
+/* GENERATION */
+async function generate(){
+  const wrap = document.getElementById("progressWrap");
+  const bar = document.getElementById("bar");
+  const done = document.getElementById("done");
   const out = document.getElementById("templateOutput");
 
+  wrap.classList.remove("hidden");
+  bar.style.width = "0%";
+  done.classList.add("hidden");
   out.classList.add("hidden");
-  loadingWrap.classList.remove("hidden");
 
-  let seconds = 15;
-  countdownEl.textContent = seconds;
-
-  // countdown timer
-  const interval = setInterval(()=>{
-    seconds--;
-    countdownEl.textContent = seconds;
-    if(seconds <= 0) clearInterval(interval);
-  },1000);
-
+  // Payload
   const payload = {
-    name: name.value, aliases: aliases.value, species: species.value, race: race.value,
-    age: age.value, height: height.value, sexuality: sexuality.value, role: role.value,
-    appearance: appearance.value, scent: scent.value, clothing: clothing.value,
-    backstory: backstory.value, residence: residence.value, relationships: relationships.value,
-    traits: traits.value, likes: likes.value, dislikes: dislikes.value, insecurities: insecurities.value,
-    behavior: behavior.value, turnons: turnons.value, kinks: kinks.value, during: during.value,
-    commanding: commanding.value, annoyed: annoyed.value, possessive: possessive.value,
-    teasing: teasing.value, soft: soft.value, sidechars: sidechars.value,
-    setting: ""
+    setting: "<setting> Modern era in (fill this out). </setting>",
+    name: document.getElementById("name").value,
+    aliases: document.getElementById("aliases").value,
+    species: document.getElementById("species").value,
+    race: document.getElementById("race").value,
+    age: document.getElementById("age").value,
+    height: document.getElementById("height").value,
+    sexuality: document.getElementById("sexuality").value,
+    role: document.getElementById("role").value,
+    appearance: document.getElementById("appearance").value,
+    scent: document.getElementById("scent").value,
+    clothing: document.getElementById("clothing").value,
+    backstory: document.getElementById("backstory").value,
+    residence: document.getElementById("residence").value,
+    relationships: document.getElementById("relationships").value,
+    traits: document.getElementById("traits").value,
+    likes: document.getElementById("likes").value,
+    dislikes: document.getElementById("dislikes").value,
+    insecurities: document.getElementById("insecurities").value,
+    behavior: document.getElementById("behavior").value,
+    turnons: document.getElementById("turnons").value,
+    kinks: document.getElementById("kinks").value,
+    during: document.getElementById("during").value,
+    commanding: document.getElementById("commanding").value,
+    annoyed: document.getElementById("annoyed").value,
+    possessive: document.getElementById("possessive").value,
+    teasing: document.getElementById("teasing").value,
+    soft: document.getElementById("soft").value,
+    sidechars: document.getElementById("sidechars").value,
   };
 
+  // Progress bar simulation
+  let progress = 0;
+  const interval = setInterval(() => {
+    progress += 1;
+    if(progress > 90) progress = 90;
+    bar.style.width = progress + "%";
+  }, 50);
+
   try {
-    const res = await fetch("/api/generate", {
+    const response = await fetch("/api/generate", {
       method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify(payload)
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
     });
-    const data = await res.json();
+    const result = await response.json();
 
     clearInterval(interval);
-    loadingWrap.classList.add("hidden");
+    bar.style.width = "100%";
+    done.classList.remove("hidden");
+
+    out.textContent = result.text;
     out.classList.remove("hidden");
-    out.textContent = data.text;
     document.getElementById("firstMessage").classList.remove("hidden");
-  } catch(err){
+  } catch(err) {
     clearInterval(interval);
-    loadingWrap.classList.add("hidden");
+    bar.style.width = "0%";
+    done.classList.add("hidden");
+    out.textContent = "Error generating character.";
     out.classList.remove("hidden");
-    out.textContent = "Error generating template.";
     console.error(err);
   }
 }
 
-/* FIRST MESSAGE */
-function generateFirst(){
+/* FIRST MESSAGE GENERATOR */
+async function generateFirst(){
   const tone = document.getElementById("tone").value;
+  const promptText = document.getElementById("prompt").value;
+  const template = document.getElementById("templateOutput").textContent;
+
   const out = document.getElementById("firstOut");
-  out.textContent = `*(${tone})*\n\n*The scene opens slowly, the atmosphere heavy with intent and presence…*\n\n**${name.value || "{{char}}"}:** "Looks like we finally meet."`;
+  out.textContent = "Generating...";
+
+  try {
+    const response = await fetch("/api/generate", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        prompt: `Create a first message for this character using the following tone: ${tone}. Optional user prompt: ${promptText}\n\nCharacter Template:\n${template}`
+      })
+    });
+    const result = await response.json();
+    out.textContent = result.text;
+  } catch(err){
+    out.textContent = "Error generating first message.";
+    console.error(err);
+  }
 }
 
 /* PARTICLES */
 const c=document.getElementById("bg");
 const ctx=c.getContext("2d");
 let w,h,pts=[];
-function resize(){ w=c.width=innerWidth; h=c.height=innerHeight; pts=[...Array(80)].map(()=>({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3})); }
+function resize(){
+  w=c.width=innerWidth;
+  h=c.height=innerHeight;
+  pts=[...Array(80)].map(()=>({
+    x:Math.random()*w,
+    y:Math.random()*h,
+    vx:(Math.random()-.5)*.3,
+    vy:(Math.random()-.5)*.3
+  }));
+}
 window.onresize=resize;
 resize();
+
 function draw(){
   ctx.clearRect(0,0,w,h);
   ctx.fillStyle="#a855f7";
@@ -382,10 +442,17 @@ function draw(){
     if(p.x<0||p.x>w)p.vx*=-1;
     if(p.y<0||p.y>h)p.vy*=-1;
     ctx.beginPath();
-    ctx.arc(p.x,p.y,2,0,7); ctx.fill();
+    ctx.arc(p.x,p.y,2,0,7);
+    ctx.fill();
     pts.forEach(q=>{
       const d=Math.hypot(p.x-q.x,p.y-q.y);
-      if(d<120){ ctx.strokeStyle=`rgba(168,85,247,${1-d/120})`; ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke(); }
+      if(d<120){
+        ctx.strokeStyle=`rgba(168,85,247,${1-d/120})`;
+        ctx.beginPath();
+        ctx.moveTo(p.x,p.y);
+        ctx.lineTo(q.x,q.y);
+        ctx.stroke();
+      }
     });
   });
   requestAnimationFrame(draw);
